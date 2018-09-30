@@ -56,12 +56,11 @@ defmodule Hangman do
   # see if letter has been guessed already
   def handle_used(true, game, guess) do
     IO.puts "Letter #{guess} already used!"
-    tally(game)
+    {game, tally(game)}
   end
 
   def handle_used(false, game, guess) do
     %Hangman { game | 
-      turns_left: game.turns_left - 1,
       used: [guess | game.used] |> Enum.sort()
     }
   end
@@ -87,6 +86,7 @@ defmodule Hangman do
 
   def handle_bad_guess(game) do
     %Hangman { game | 
+      turns_left: game.turns_left - 1,
       game_state: :bad_guess
     }
   end
