@@ -29,7 +29,7 @@ defmodule Hangman do
       word_letters: word_letters, 
       letters: populate_letters(string_to_list(new_word), [])
     }
-    tally(game)
+    # tally(game)
   end
 
   def string_to_list(word) do
@@ -41,11 +41,14 @@ defmodule Hangman do
     populate_letters(t, ["_" | letters])
   end
 
+  def tally_checkstate(:won, _letters, word_letters) do word_letters end
+  def tally_checkstate(:lost, _letters, word_letters) do word_letters end
+  def tally_checkstate(_, letters, _word_letters) do letters end
   def tally(game) do
     %{
       game_state: game.game_state,
       turns_left: game.turns_left,
-      letters: game.letters,
+      letters: tally_checkstate(game.game_state, game.letters, game.word_letters),
       used: game.used
     }
   end
