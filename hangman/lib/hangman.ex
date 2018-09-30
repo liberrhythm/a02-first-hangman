@@ -60,31 +60,18 @@ defmodule Hangman do
   end
 
   def handle_used(false, game, guess) do
-    game = %Hangman { game | 
-      turns_left: turns_left - 1,
-      game.used = [guess | game.used] |> Enum.sort()
-    })
-    handle_guess(Enum.member?(game.word_letters, guess), guess, game)
-  end
-
-  def guess_in_word(true, game) do
     %Hangman { game | 
-      game_state: :good_guess,
-      letters: 
-    })
-  end
-  def guess_in_word(false, game) do
-    tally(%Hangman { game | 
-      game_state: :bad_guess
-    })
+      turns_left: game.turns_left - 1,
+      used: [guess | game.used] |> Enum.sort()
+    }
   end
 
   def letter_in_used(letter, used) do 
     Enum.member?(used, letter)
   end
 
-  def replace_letters(used, letters) do
-    Enum.map(letters, fn(x) -> 
+  def replace_letters(used, word_letters) do
+    Enum.map(word_letters, fn(x) -> 
       if letter_in_used(x, used) do x
       else "_"
       end
@@ -92,27 +79,53 @@ defmodule Hangman do
   end 
 
   def handle_good_guess(game) do
-    check_game_state(%Hangman { game | 
-      replace_letters(game, game.letters)
-    })
+    %Hangman { game | 
+      game_state: :good_guess,
+      letters: replace_letters(game.used, game.word_letters)
+    }
   end
 
-  def handle_guess(false, guess, game) do
-    tally(%Hangman { game | 
+  def handle_bad_guess(game) do
+    %Hangman { game | 
       game_state: :bad_guess
-    })
-  end
-  
-  def handle_guess(true, guess, game) do
-    tally(%Hangman { handle_good_guess(game) | 
-      game_state: :good_guess
-    })
+    }
   end
 
-  # implement check_game_state and update_game_state
+  # handle a guess -- good or bad
+  def handle_guess(true, game) do
+    handle_game_state(handle_good_guess(game))
+  end
 
+  def handle_guess(false, game) do
+    handle_game_state(handle_bad_guess(game))
+  end
+
+  def update_game_state(true, _, game) do
+    %Hangman { game | 
+      game_state: :won
+    }
+  end
+
+  def update_game_state(false, true, game) do
+    %Hangman { game | 
+      game_state: :lost
+    }
+  end 
+
+  def update_game_state(_, _, game) do game end
+
+  def handle_game_state(game) do
+    # out of guesses: game.turns_left == 0
+    # letters match: game.letters == game.word_letters
+    update_game_state(game.letters == game.word_letters, game.turns_left == 0, game)
+  end
+
+
+  # check to see if already won or lost...
   def make_move(game, guess) do
-    handle_used(Enum.member?(game.used, guess), game, guess)
+    game = handle_used(Enum.member?(game.used, guess), game, guess)
+    game = handle_guess(Enum.member?(game.word_letters, guess), game)
+    {game, tally(game)}
   end
 
 end
